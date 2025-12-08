@@ -3,7 +3,7 @@ from typing import Dict, Any
 import requests
 import os
 
-MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8000")
+MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8001")
 
 
 def call_rag_tool(query: str, constraints: Dict[str, Any] | None = None, max_results: int = 5):

@@ -13,6 +13,9 @@ from langgraph.graph import StateGraph, END
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # Import MCP client (your custom module)
 from mcp_client import call_rag_tool, call_web_tool
 
