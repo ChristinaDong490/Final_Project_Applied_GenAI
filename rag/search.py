@@ -49,10 +49,11 @@ def search_products(
     sort_by: str = "hybrid",  # "similarity", "rating_price", "hybrid"
 ) -> List[Dict[str, Any]]:
     """
-    Enhanced hybrid retrieval combining:
+    Enhanced hybrid retrieval with:
     - vector similarity (50 candidates)
     - metadata filtering (price, brand, subcategory)
     - hybrid reranking across (distance, rating, price)
+    Clean version: removed all -1 placeholder outputs.
     """
 
     # ---------------------------------------
@@ -77,45 +78,53 @@ def search_products(
 
     for pid, meta, dist in zip(ids, metas, dists):
 
-        # Extract metadata with fallbacks
-        title = meta.get("title", "")
+        # Extract metadata with clean fallbacks
+        title = meta.get("title", "") or ""
         price = meta.get("price", None)
-        rating = meta.get("rating", -1.0)
+        rating = meta.get("rating")
         brand_val = meta.get("brand", "") or ""
         subcat = meta.get("subcategory", "") or ""
-        product_url = meta.get("product_url", "")
-        image_url = meta.get("image_url", "")
-        ingredients = meta.get("ingredients", "")
-        features = meta.get("features", "")
+        product_url = meta.get("product_url", "") or ""
+        image_url = meta.get("image_url", "") or ""
+        ingredients = meta.get("ingredients", "") or ""
+        features = meta.get("features", "") or ""
+        category = meta.get("category", "") or ""
 
         # ---------------------------------------
         # Apply metadata filters
         # ---------------------------------------
 
-        # price ≤ max_price
-        if (max_price is not None) and (price is not None) and (price > max_price):
-            continue
+        # price filter
+        if max_price is not None:
+            # If price is missing, skip immediately
+            if price is None or price < 0:
+                continue
+            # Otherwise enforce max price
+            if price > max_price:
+                continue
 
-        # brand filter (optional)
+        # brand filter
         if brand and brand.lower() not in brand_val.lower():
             continue
 
-        # subcategory filter (optional)
+        # subcategory filter
         if subcategory_filter and subcategory_filter.lower() not in subcat.lower():
             continue
 
-        # normalize missing rating
-        if rating is None:
-            rating = -1.0
+        # rating: convert -1 → None so UI never sees -1
+        if rating in [None, "", "-1", -1, -1.0]:
+            rating = 0.0
+        else:
+            rating = float(rating)
 
         candidates.append({
             "id": pid,
             "title": title,
-            "price": price,
+            "price": price if price is not None else None,
             "rating": rating,
             "brand": brand_val,
             "subcategory": subcat,
-            "category": meta.get("category", ""),
+            "category": category,
             "features": features,
             "ingredients": ingredients,
             "product_url": product_url,
@@ -132,14 +141,13 @@ def search_products(
     # -------------------------------------------------
 
     if sort_by == "similarity":
-        # smaller distance is better
         candidates = sorted(candidates, key=lambda x: x["_distance"])
 
     elif sort_by == "rating_price":
         candidates = sorted(
             candidates,
             key=lambda x: (
-                -(x["rating"] if x["rating"] is not None else -1),
+                -(x["rating"] or 0),  # if None → 0
                 x["price"] if x["price"] is not None else 1e9,
             ),
         )
@@ -147,17 +155,17 @@ def search_products(
     else:  # hybrid (BEST)
         def hybrid_key(x):
             dist = x["_distance"]
-            rating = x["rating"] if x["rating"] is not None else -1
-            price = x["price"] if x["price"] is not None else 1e9
+            rating_val = x["rating"] if x["rating"] is not None else 0
+            price_val = x["price"] if x["price"] is not None else 1e9
             return (
-                dist,     # similarity first
-                -rating,  # higher rating better
-                price,    # cheaper preferred
+                dist,          # similarity
+                -rating_val,   # higher rating is better
+                price_val,     # cheaper is better
             )
 
         candidates = sorted(candidates, key=hybrid_key)
 
-    # Remove internal keys and return top-k
+    # Remove internal keys and return top-k clean results
     final = []
     for c in candidates[:max_results]:
         c.pop("_distance", None)

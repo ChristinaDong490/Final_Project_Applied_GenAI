@@ -95,17 +95,23 @@ async def mcp_rag_search(req: RagSearchRequest):
         constraints = req.constraints or {}
         max_price = constraints.get("budget")
         brand = constraints.get("brand")
+        subcategory = constraints.get("category")
 
-        logger.info(f"[rag.search] query='{req.query}', max_price={max_price}, brand={brand}")
+        logger.info(
+            f"[rag.search] query='{req.query}', "
+            f"max_price={max_price}, brand={brand}, subcategory={subcategory}"
+        )
 
         results = search_products(
             query=req.query,
             max_results=req.max_results,
             max_price=max_price,
             brand=brand,
+            subcategory_filter=subcategory,
         )
 
         return {"results": results}
+
     except Exception as e:
         logger.exception("Error in rag.search")
         raise HTTPException(status_code=500, detail=str(e))
