@@ -12,9 +12,6 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 load_dotenv()
 
-# Debug: confirm correct file is loading
-print("🟩 Loaded server.py from:", __file__)
-
 # Import our modules
 from assistant_graph import run_pipeline
 from audio_handler import AudioHandler
