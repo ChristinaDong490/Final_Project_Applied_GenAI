@@ -22,22 +22,36 @@ The system integrates **LangGraph multi-agent orchestration**, **MCP tools**, **
 
 ## 📂 Repository Structure
 
-- assistant_graph.py — LangGraph multi-agent workflow (Router → Planner → Retriever → Answerer)
-- audio_handler.py — Whisper ASR + TTS processing
-- main.py — Backend orchestrator connecting ASR, agents, MCP tools, and TTS
-- mcp_client.py — Helper for calling MCP tools from the backend
+```text
+.
+├── assistant_graph.py          # LangGraph multi-agent pipeline
+├── audio_handler.py            # Whisper ASR + TTS utilities
+├── main.py                     # Backend orchestrator (ASR → agents → TTS)
+├── mcp_client.py               # Client for calling MCP tools
 
-- mcp_server/ — MCP server exposing rag.search and web.search
-- prompts/ — All agent + system prompts (Prompt Disclosure)
-- rag/ — Private RAG pipeline: cleaning, embedding, and vector index search
+├── mcp_server/                 # MCP server exposing rag.search + web.search
+│   ├── server.py               # Main MCP server (HTTP)
+│   ├── web_search.py           # Live web search tool
 
-- src/ — React UI (mic input, transcripts, agent logs, product panel)
-- data/ — Cleaned dataset and generated Chroma index (local only)
+├── prompts/                    # Prompt Disclosure (system / router / planner / answerer)
+│   ├── system.txt
+│   ├── router.txt
+│   ├── planner.txt
+│   └── answerer.txt
 
-- .env.example — Environment template
-- .gitignore
-- requirements.txt
-- README.md
+├── rag/                        # Private RAG processing + vector index
+│   ├── config.py               # Paths for dataset + Chroma index
+│   ├── data_prep.py            # Cleaning + preprocessing
+│   ├── build_index.py          # Embedding + index builder
+│   └── search.py               # rag.search tool logic
+
+├── src/                        # React UI (mic, transcript, logs, product panel)
+├── data/                       # Clean dataset + generated vector store (local only)
+
+├── .env.example                # Environment template
+├── .gitignore
+├── requirements.txt
+└── README.md
 
 ---
 
